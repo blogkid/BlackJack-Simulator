@@ -4,16 +4,17 @@ import numpy as np
 from importer.StrategyImporter import StrategyImporter
 
 
-GAMES = 200000
+GAMES = 500000
 SHOE_SIZE = 6
-#BET_SPREAD = 16.6 # 5000 / 300
-BET_SPREAD = 1.0
+BET_SPREAD = 20 # 5000 / 300
+BIG_BET_START = 4
+#BET_SPREAD = 1.0
 
 DECK_SIZE = 52.0
 CARDS = {"Ace": 11, "Two": 2, "Three": 3, "Four": 4, "Five": 5, "Six": 6, "Seven": 7, "Eight": 8, "Nine": 9, "Ten": 10, "Jack": 10, "Queen": 10, "King": 10}
 #BASIC = {"Ace": 0, "Two": 1, "Three": 1, "Four": 2, "Five": 2, "Six": 2, "Seven": 1, "Eight": 0, "Nine": -1, "Ten": -2, "Jack": -2, "Queen": -2, "King": -2}
 #BASIC = {"Ace": -1, "Two": 1, "Three": 1, "Four": 1, "Five": 1, "Six": 1, "Seven": 0, "Eight": 0, "Nine": 0, "Ten": -1, "Jack": -1, "Queen": -1, "King": -1}
-BASIC = {"Ace": -2, "Two": 1, "Three": 1, "Four": 1, "Five": 2, "Six": 1, "Seven": 0, "Eight": 0, "Nine": 0, "Ten": -1, "Jack": -1, "Queen": -1, "King": -1}
+BASIC = {"Ace": -1, "Two": 1, "Three": 1, "Four": 1, "Five": 2, "Six": 1, "Seven": 0, "Eight": 0, "Nine": 0, "Ten": -1, "Jack": -1, "Queen": -1, "King": -1}
 BUFFER_SIZE = 16
 
 BLACKJACK_RULES = {
@@ -44,6 +45,7 @@ class Shoe(object):
 
     def __init__(self, decks):
         self.count = 1
+        self.previous_count = 0
         self.decks = decks
         self.cards = self.init_cards()
         self.restart()
@@ -96,6 +98,7 @@ class Shoe(object):
         Add the dealt card to current count.
         """
         self.count += BASIC[card.name]
+        self.previous_count += BASIC[card.name]
 
 
 class Hand(object):
@@ -265,6 +268,10 @@ class Player(object):
                     flag = 'H'
 
             if flag == 'Sr':
+                # special treat 16 when count positive
+                if shoe.previous_count > 0 and hand.cards[0].value == 16 and self.dealer_hand.cards[0].value == 10:
+                    break
+            
                 if hand.length() == 2:
                     print "Surrender"
                     hand.surrender = True
@@ -378,10 +385,11 @@ class Game(object):
     def play_round(self):
         self.money = 0
         self.bet = 0
-        if self.shoe.count > 3:
+        if self.shoe.count > BIG_BET_START:
             self.stake = 300 * BET_SPREAD
         else:
             self.stake = 300.0
+        self.shoe.previous_count = self.shoe.count
         self.shoe.count = 1
 
         player1_hand = Hand([self.shoe.deal(), self.shoe.deal()])
@@ -444,7 +452,7 @@ if __name__ == "__main__":
         moneys.append(game.get_money())
         bets.append(game.get_bet())
 
-        print("WIN for Game no. %d: %s (%s bet)" % (g + 1, "{0:.2f}".format(game.get_money()), "{0:.2f}".format(game.get_bet())))
+        print("WIN for Game no. %d: %s ( %s bet)" % (g + 1, "{0:.2f}".format(game.get_money()), "{0:.2f}".format(game.get_bet())))
         game.bet = 0
 
     sume = 0.0
