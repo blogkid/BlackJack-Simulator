@@ -4,7 +4,7 @@ import numpy as np
 from importer.StrategyImporter import StrategyImporter
 
 
-GAMES = 500000
+GAMES = 2000000
 SHOE_SIZE = 6
 BET_SPREAD = 20 # 5000 / 300
 BIG_BET_START = 4
@@ -234,6 +234,8 @@ class Player(object):
     def __init__(self, hand=None, dealer_hand=None):
         self.hands = [hand]
         self.dealer_hand = dealer_hand
+        self.splited_count = 0
+        self.splited_card = None
 
     def set_hands(self, new_hand, new_dealer_hand):
         self.hands = [new_hand]
@@ -253,7 +255,7 @@ class Player(object):
         while not hand.busted() and not hand.blackjack():
             if hand.soft():
                 flag = SOFT_STRATEGY[hand.value][self.dealer_hand.cards[0].name]
-            elif hand.splitable():
+            elif hand.splitable() and (self.splited_card != 'Ace' and self.splited_count < 3 or self.splited_card == 'Ace' and self.splited_count < 1):
                 flag = PAIR_STRATEGY[hand.value][self.dealer_hand.cards[0].name]
             else:
                 flag = HARD_STRATEGY[hand.value][self.dealer_hand.cards[0].name]
@@ -271,7 +273,7 @@ class Player(object):
                 # special treat 16 when count positive
                 if shoe.previous_count > 0 and hand.cards[0].value == 16 and self.dealer_hand.cards[0].value == 10:
                     break
-            
+
                 if hand.length() == 2:
                     print "Surrender"
                     hand.surrender = True
@@ -283,6 +285,8 @@ class Player(object):
                 self.hit(hand, shoe)
 
             if flag == 'P':
+                self.splited_count += 1
+                self.splited_card = hand.cards[0].name
                 self.split(hand, shoe)
 
             if flag == 'S':
@@ -438,6 +442,13 @@ if __name__ == "__main__":
     importer = StrategyImporter(sys.argv[1])
     HARD_STRATEGY, SOFT_STRATEGY, PAIR_STRATEGY = importer.import_player_strategy()
     print HARD_STRATEGY
+    print SOFT_STRATEGY
+    print PAIR_STRATEGY
+    '''
+    {21: {'Player': 'A10', 'Two': 'S', 'Three': 'S', 'Four': 'S', 'Five': 'S', 'Six': 'S', 'Seven': 'S', 'Eight': 'S', 'Nine': 'S', 'Ten': 'S', 'Jack': 'S', 'Queen': 'S', 'King': 'S', 'Ace': 'S'}, 20: {'Player': 'A9', 'Two': 'S', 'Three': 'S', 'Four': 'S', 'Five': 'S', 'Six': 'S', 'Seven': 'S', 'Eight': 'S', 'Nine': 'S', 'Ten': 'S', 'Jack': 'S', 'Queen': 'S', 'King': 'S', 'Ace': 'S'}, 19: {'Player': 'A8', 'Two': 'S', 'Three': 'S', 'Four': 'S', 'Five': 'S', 'Six': 'S', 'Seven': 'S', 'Eight': 'S', 'Nine': 'S', 'Ten': 'S', 'Jack': 'S', 'Queen': 'S', 'King': 'S', 'Ace': 'S'}, 18: {'Player': 'A7', 'Two': 'S', 'Three': 'D', 'Four': 'D', 'Five': 'D', 'Six': 'D', 'Seven': 'S', 'Eight': 'S', 'Nine': 'H', 'Ten': 'H', 'Jack': 'H', 'Queen': 'H', 'King': 'H', 'Ace': 'H'}, 17: {'Player': 'A6', 'Two': 'H', 'Three': 'D', 'Four': 'D', 'Five': 'D', 'Six': 'D', 'Seven': 'H', 'Eight': 'H', 'Nine': 'H', 'Ten': 'H', 'Jack': 'H', 'Queen': 'H', 'King': 'H', 'Ace': 'H'}, 16: {'Player': 'A5', 'Two': 'H', 'Three': 'H', 'Four': 'D', 'Five': 'D', 'Six': 'D', 'Seven': 'H', 'Eight': 'H', 'Nine': 'H', 'Ten': 'H', 'Jack': 'H', 'Queen': 'H', 'King': 'H', 'Ace': 'H'}, 15: {'Player': 'A4', 'Two': 'H', 'Three': 'H', 'Four': 'D', 'Five': 'D', 'Six': 'D', 'Seven': 'H', 'Eight': 'H', 'Nine': 'H', 'Ten': 'H', 'Jack': 'H', 'Queen': 'H', 'King': 'H', 'Ace': 'H'}, 14: {'Player': 'A3', 'Two': 'H', 'Three': 'H', 'Four': 'H', 'Five': 'D', 'Six': 'D', 'Seven': 'H', 'Eight': 'H', 'Nine': 'H', 'Ten': 'H', 'Jack': 'H', 'Queen': 'H', 'King': 'H', 'Ace': 'H'}, 13: {'Player': 'A2', 'Two': 'H', 'Three': 'H', 'Four': 'H', 'Five': 'D', 'Six': 'D', 'Seven': 'H', 'Eight': 'H', 'Nine': 'H', 'Ten': 'H', 'Jack': 'H', 'Queen': 'H', 'King': 'H', 'Ace': 'H'}, 12: {'Player': 'AA', 'Two': 'P', 'Three': 'P', 'Four': 'P', 'Five': 'P', 'Six': 'P', 'Seven': 'P', 'Eight': 'P', 'Nine': 'P', 'Ten': 'P', 'Jack': 'P', 'Queen': 'P', 'King': 'P', 'Ace': 'P'}}
+    {20: {'Player': '1010', 'Two': 'S', 'Three': 'S', 'Four': 'S', 'Five': 'S', 'Six': 'S', 'Seven': 'S', 'Eight': 'S', 'Nine': 'S', 'Ten': 'S', 'Jack': 'S', 'Queen': 'S', 'King': 'S', 'Ace': 'S'}, 18: {'Player': '99', 'Two': 'P', 'Three': 'P', 'Four': 'P', 'Five': 'P', 'Six': 'P', 'Seven': 'S', 'Eight': 'P', 'Nine': 'P', 'Ten': 'S', 'Jack': 'S', 'Queen': 'S', 'King': 'S', 'Ace': 'S'}, 16: {'Player': '88', 'Two': 'P', 'Three': 'P', 'Four': 'P', 'Five': 'P', 'Six': 'P', 'Seven': 'P', 'Eight': 'P', 'Nine': 'P', 'Ten': 'P', 'Jack': 'P', 'Queen': 'P', 'King': 'P', 'Ace': 'P'}, 14: {'Player': '77', 'Two': 'P', 'Three': 'P', 'Four': 'P', 'Five': 'P', 'Six': 'P', 'Seven': 'P', 'Eight': 'H', 'Nine': 'H', 'Ten': 'H', 'Jack': 'H', 'Queen': 'H', 'King': 'H', 'Ace': 'H'}, 12: {'Player': '66', 'Two': 'P', 'Three': 'P', 'Four': 'P', 'Five': 'P', 'Six': 'P', 'Seven': 'H', 'Eight': 'H', 'Nine': 'H', 'Ten': 'H', 'Jack': 'H', 'Queen': 'H', 'King': 'H', 'Ace': 'H'}, 10: {'Player': '55', 'Two': 'D', 'Three': 'D', 'Four': 'D', 'Five': 'D', 'Six': 'D', 'Seven': 'D', 'Eight': 'D', 'Nine': 'D', 'Ten': 'H', 'Jack': 'H', 'Queen': 'H', 'King': 'H', 'Ace': 'H'}, 8: {'Player': '44', 'Two': 'H', 'Three': 'H', 'Four': 'H', 'Five': 'P', 'Six': 'P', 'Seven': 'H', 'Eight': 'H', 'Nine': 'H', 'Ten': 'H', 'Jack': 'H', 'Queen': 'H', 'King': 'H', 'Ace': 'H'}, 6: {'Player': '33', 'Two': 'P', 'Three': 'P', 'Four': 'P', 'Five': 'P', 'Six': 'P', 'Seven': 'P', 'Eight': 'H', 'Nine': 'H', 'Ten': 'H', 'Jack': 'H', 'Queen': 'H', 'King': 'H', 'Ace': 'H'}, 4: {'Player': '22', 'Two': 'P', 'Three': 'P', 'Four': 'P', 'Five': 'P', 'Six': 'P', 'Seven': 'P', 'Eight': 'H', 'Nine': 'H', 'Ten': 'H', 'Jack': 'H', 'Queen': 'H', 'King': 'H', 'Ace': 'H'}}
+
+    '''
 
     moneys = []
     bets = []
